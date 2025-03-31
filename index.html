@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Website</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+    <style>
+      @font-face {
+    font-family: 'Peyda';
+    src: url('/Fonts/Peyda.eot') format('embedded-opentype'),
+         url('/Fonts/Peyda.woff2') format('woff2'),
+         url('/Fonts/Peyda.woff') format('woff'),
+         url('/Fonts/Peyda.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+      /* Styles from previous version... */
+      @import url("https://fonts.googleapis.com/css2?family=Peyda:wght@400;500;600;700&display=swap");
+      * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Peyda", sans-serif; }
+      body { font-family: "Peyda", sans-serif; color: #fff; line-height: 1.6; overflow-x: hidden; background-color: #000; }
+      #app { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+      .navbar { font-family: "Peyda", sans-serif; position: fixed; top: 0; right: 0; width: 80px; height: 100vh; background-color: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; transition: width 0.9s ease; }
+      .side-menu { font-family: "Peyda", sans-serif; position: fixed; top: 0; right: 80px; width: 0; height: 100vh; background-color: #171717; z-index: 99; overflow: hidden; transition: width 0.9s ease; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+      .menu-links { font-family: "Peyda", sans-serif; }
+      .side-menu.expanded { width: 250px; }
+      .logo-container { padding: 20px 0; display: flex; justify-content: center; }
+      .logo { width: 100px; height: auto; max-width: 80%; margin-top: 10px; }
+      .hamburger { cursor: pointer; margin-top: 160px; padding: 15px; position: relative; z-index: 101; }
+      .hamburger-line { width: 30px; height: 3px; background-color: #fff; margin: 6px 0; transition: 0.9s; }
+      .expanded .hamburger-line:first-child { transform: rotate(-45deg) translate(-5px, 6px); }
+      .expanded .hamburger-line:nth-child(2) { opacity: 0; }
+      .expanded .hamburger-line:last-child { transform: rotate(45deg) translate(-5px, -6px); }
+      .menu-links { font-family: "Peyda", sans-serif; text-align: center; width: 100%; }
+      .menu-links a { font-family: "Peyda", sans-serif; display: block; padding: 15px; text-decoration: none; color: #fff; font-size: 1.2rem; margin: 10px 0; transition: transform 0.3s ease; }
+      .menu-links a:hover { transform: translateX(10px); }
+      .main-container { width: calc(100vw - 80px); height: 100vh; position: relative; margin-right: 80px; transition: transform 0.3s ease, filter 0.3s ease; background-color: #000; }
+      .main-container.shifted { transform: translateX(-250px); filter: brightness(0.5); }
+      .background-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.8s ease-in-out; opacity: 0; z-index: 1; }
+      .background-image.active { opacity: 1; z-index: 2; }
+      .sections-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: row; z-index: 5; transition: opacity 0.5s ease; opacity: 1; }
+      .sections-overlay.hidden-intro { opacity: 0; pointer-events: none; /* Prevent interaction */ }
+      .section { flex: 1; display: flex; justify-content: center; align-items: flex-end; text-align: center; position: relative; cursor: pointer; transition: background-color 0.3s ease; z-index: 10; padding-bottom: 40px; width: 100%; height: 100%; }
+      .section:not(:last-child)::after { content: ""; position: absolute; right: 0; top: 10%; height: 80%; width: 1px; background-color: rgba(255, 255, 255, 0.5); z-index: 11; transition: top 0.3s ease, height 0.3s ease; }
+      .section:nth-child(2)::after { height: 24%; top: 66%; }
+      .section:hover { background-color: rgba(0, 0, 0, 0.3); }
+      .section a { font-family: "Peyda", sans-serif; font-size: 1.5rem; text-decoration: none; color: #ebebeb; text-shadow: 2px 2px 4px rgb(0, 0, 0); transition: transform 0.3s ease, margin-bottom 0.3s ease; display: block; padding: 20px; position: relative; z-index: 12; pointer-events: none; background-color: transparent; border-radius: 0; border: none; }
+      .section:hover a { transform: scale(1.05); margin-bottom: 20px; }
+      .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 98; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s; }
+      .overlay.active { opacity: 1; visibility: visible; transition: opacity 0.3s ease; }
+      .mobile-dots { position: fixed; bottom: 35px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 15; padding: 5px; border-radius: 10px; display: none; transition: opacity 0.5s ease; opacity: 1; }
+      .mobile-dots.hidden-intro { opacity: 0; pointer-events: none; }
+      .dot { width: 11px; height: 11px; background-color: transparent; border: 1.5px solid rgba(255, 255, 255, 0.6); border-radius: 50%; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease; }
+      .dot.active { background-color: #fff; border-color: #fff; }
+
+      /* Responsive design - Mobile */
+      @media (max-width: 768px) {
+        .navbar { width: 60px; }
+        .logo { width: 40px; height: auto; }
+        .hamburger { margin-top: 100px; }
+        .side-menu { right: 60px; width: 0; }
+        .side-menu.expanded { width: calc(100vw - 60px); }
+        .main-container { width: calc(100vw - 60px); margin-right: 60px; }
+        .main-container.shifted { transform: translateX(calc(-100vw + 60px)); filter: brightness(0.5); }
+
+        /* --- Mobile Section & Overlay --- */
+        .sections-overlay { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
+        .section { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 80px; opacity: 0; /* Default hidden */ transition: opacity 0.8s ease-in-out; z-index: 6; cursor: default; background-color: transparent !important; }
+        .section.active-mobile { opacity: 1; z-index: 7; }
+        .section::after { display: none !important; }
+
+        /* --- START: Added Rule to Force Hide Sections During Intro --- */
+        /* Ensure sections inside the hidden overlay are truly hidden and unclickable */
+        .sections-overlay.hidden-intro .section {
+            opacity: 0 !important;
+            visibility: hidden !important; /* Hides visually and removes from layout flow partially */
+            pointer-events: none !important; /* Prevent any accidental interaction */
+        }
+        /* --- END: Added Rule --- */
+
+        /* Mobile Section Link Button Styling */
+        .section a { font-size: 1.7rem; font-weight: 500; color: #fff; text-decoration: none; text-shadow: none; background-color: rgba(0, 0, 0, 0.55); padding: 12px 28px; border-radius: 30px; margin-bottom: 15px; display: inline-block; position: relative; z-index: 8; pointer-events: auto; transform: none !important; transition: background-color 0.3s ease, transform 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .section a:hover { background-color: rgba(255, 255, 255, 0.15); transform: translateY(-3px); margin-bottom: 15px; }
+        .section a:active { transform: translateY(-1px); background-color: rgba(255, 255, 255, 0.1); }
+        .section:hover { background-color: transparent; }
+
+        /* Show mobile dots container */
+        .mobile-dots { display: flex; }
+      }
+      @media (max-width: 768px) {
+        .hamburger {
+           top: 20%;
+           }
+        
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HTML structure remains the same as the previous version -->
+    <div id="app">
+      <!-- Navbar, Side Menu, Overlay -->
+      <div class="navbar" :class="{ expanded: menuExpanded }">
+         <div class="logo-container"> <img class="logo" src="/logo.png" alt="logo" /> </div>
+         <div class="hamburger" @click="toggleMenu"> <div class="hamburger-line"></div> <div class="hamburger-line"></div> <div class="hamburger-line"></div> </div>
+      </div>
+      <div class="side-menu" :class="{ expanded: menuExpanded }">
+         <div class="menu-links"> <a href="/about/index.html" @click="closeMenu">درباره من</a> <a href="/projects/index.html" @click="closeMenu">پروژه‌ها</a> <a href="/skills/index.html" @click="closeMenu">مهارت‌ها</a> <a href="/contact/index.html" @click="closeMenu">ارتباط با من</a> </div>
+      </div>
+      <div class="overlay" :class="{ active: menuExpanded }" @click="closeMenu"></div>
+
+      <!-- Main content container -->
+      <div class="main-container" :class="{ shifted: menuExpanded }" @click="handleMainClick">
+         <!-- Background images -->
+         <img v-for="(image, index) in images" :key="'img-' + index" :src="image.url" :alt="image.alt" class="background-image" :class="{ active: currentImage === index }" />
+         <!-- Sections Overlay (Conditionally hidden via class) -->
+         <div class="sections-overlay" :class="{'hidden-intro': isMobile && showMobileIntro}">
+             <div v-for="(section, index) in sections" :key="'section-' + index" class="section" :class="{ 'active-mobile': isMobile && !showMobileIntro && activeMobileSectionIndex === index }" @mouseenter="handleMouseEnter(index)" @mouseleave="handleMouseLeave" @click="handleSectionClick(section.link, index)">
+                 <a :href="section.link">{{ section.title }}</a>
+             </div>
+         </div>
+      </div>
+
+      <!-- Mobile Navigation Dots (Conditionally hidden via class) -->
+      <div class="mobile-dots" :class="{'hidden-intro': isMobile && showMobileIntro}" v-show="isMobile">
+         <span v-for="(section, index) in sections" :key="'dot-' + index" class="dot" :class="{ active: !showMobileIntro && activeMobileSectionIndex === index }" @click="goToMobileSection(index)"></span>
+      </div>
+    </div>
+
+    <script>
+      // Vue script remains exactly the same as the previous version
+      // No changes needed here
+      const { createApp, ref, onMounted, onUnmounted } = Vue;
+
+      createApp({
+        setup() {
+          const defaultImageIndex = 0;
+          const introImageIndex = 5;
+          const currentImage = ref(defaultImageIndex);
+          const menuExpanded = ref(false);
+          const isMobile = ref(window.innerWidth <= 768);
+          const activeMobileSectionIndex = ref(0);
+          const showMobileIntro = ref(false);
+          let mobileInterval = null;
+          let introTimeout = null;
+          const mobileSlideDuration = 5000;
+          const introDuration = 3000;
+
+          const images = [
+            { url: "/mimg/main.png", alt: "Main image - overview" },
+            { url: "/mimg/skills.webp", alt: "skills image" },
+            { url: "/mimg/projects.webp", alt: "Projects image" },
+            { url: "/mimg/growth.webp" },
+            { url: "/mimg/contact.webp", alt: "Contact image" },
+            { url: "/mimg/minhero2.png", alt: "Intro image" }, // REPLACE URL
+          ];
+
+          const sections = [
+            { title: "چه کمکی از دست من برمیاد؟", link: "/skills/index.html" },
+            { title: " پروژه و همکاری‌های اخیر", link: "/projects/index.html" },
+            { title: "خط زمانی-داستانی من", link: "/skills/index.html" },
+            { title: "چطور من رو میشه پیدا کرد؟", link: "/contact/index.html" },
+          ];
+
+          const endMobileIntro = () => {
+              if (!showMobileIntro.value) return;
+              clearTimeout(introTimeout);
+              introTimeout = null;
+              showMobileIntro.value = false;
+              activeMobileSectionIndex.value = 0;
+              currentImage.value = activeMobileSectionIndex.value + 1; // Img index 1 for section 0
+              startMobileSlider();
+          }
+
+          const stopMobileSlider = () => {
+            if (mobileInterval) { clearInterval(mobileInterval); mobileInterval = null; }
+          };
+
+          const startMobileSlider = () => {
+            stopMobileSlider();
+            if (isMobile.value && !showMobileIntro.value) {
+               currentImage.value = activeMobileSectionIndex.value + 1;
+              mobileInterval = setInterval(() => {
+                activeMobileSectionIndex.value = (activeMobileSectionIndex.value + 1) % sections.length;
+                currentImage.value = activeMobileSectionIndex.value + 1;
+              }, mobileSlideDuration);
+            }
+          };
+
+           const goToMobileSection = (index) => {
+               if (!isMobile.value) return;
+               if (showMobileIntro.value) {
+                    endMobileIntro();
+                    if (index !== 0) {
+                       stopMobileSlider();
+                       activeMobileSectionIndex.value = index;
+                       currentImage.value = index + 1;
+                       startMobileSlider();
+                    }
+               } else {
+                   stopMobileSlider();
+                   activeMobileSectionIndex.value = index;
+                   currentImage.value = index + 1;
+                   startMobileSlider();
+               }
+           };
+
+          const handleMouseEnter = (index) => { if (!isMobile.value) { currentImage.value = index + 1; } };
+          const handleMouseLeave = () => { if (!isMobile.value) { currentImage.value = defaultImageIndex; } };
+          const handleSectionClick = (url, index) => { if (!isMobile.value) { window.location.href = url; } };
+          const toggleMenu = () => { menuExpanded.value = !menuExpanded.value; };
+          const closeMenu = () => { menuExpanded.value = false; };
+          const handleMainClick = (event) => { if (menuExpanded.value && !event.target.closest('.navbar') && !event.target.closest('.side-menu')) { closeMenu(); } };
+
+           const checkScreenSize = () => {
+             const currentlyMobile = window.innerWidth <= 768;
+             if (currentlyMobile !== isMobile.value) {
+                 clearTimeout(introTimeout);
+                 stopMobileSlider();
+                 isMobile.value = currentlyMobile;
+                 if (isMobile.value) {
+                     showMobileIntro.value = true;
+                     currentImage.value = introImageIndex;
+                     activeMobileSectionIndex.value = 0; // Reset index
+                     introTimeout = setTimeout(endMobileIntro, introDuration);
+                 } else {
+                     showMobileIntro.value = false;
+                     currentImage.value = defaultImageIndex;
+                     activeMobileSectionIndex.value = 0;
+                 }
+             }
+           };
+
+          onMounted(() => { window.addEventListener('resize', checkScreenSize); checkScreenSize(); });
+          onUnmounted(() => { window.removeEventListener('resize', checkScreenSize); clearTimeout(introTimeout); stopMobileSlider(); });
+
+          return { currentImage, menuExpanded, images, sections, isMobile, activeMobileSectionIndex, showMobileIntro, handleMouseEnter, handleMouseLeave, handleSectionClick, toggleMenu, closeMenu, handleMainClick, goToMobileSection, };
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
