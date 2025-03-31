@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"> <!-- Set language and direction -->
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>وب‌سایت شخصی</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+    <style>
+      /* --- Base Styles (Including Peyda Font) --- */
+      @font-face {
+          font-family: 'Peyda';
+          src: url('/Fonts/Peyda.eot') format('embedded-opentype'),
+               url('/Fonts/Peyda.woff2') format('woff2'),
+               url('/Fonts/Peyda.woff') format('woff'),
+               url('/Fonts/Peyda.ttf') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Peyda", sans-serif; }
+      body { font-family: "Peyda", sans-serif; color: #fff; line-height: 1.6; overflow-x: hidden; background-color: #000; }
+      html { font-size: 16px; /* Base font size */ }
+
+      /* --- App Container --- */
+      #app { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+
+      /* --- Desktop Navbar & Side Menu (Hidden on Mobile) --- */
+      .navbar-desktop { font-family: "Peyda", sans-serif; position: fixed; top: 0; right: 0; width: 80px; height: 100vh; background-color: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; transition: width 0.9s ease; }
+      .side-menu-desktop { font-family: "Peyda", sans-serif; position: fixed; top: 0; right: 80px; width: 0; height: 100vh; background-color: #171717; z-index: 99; overflow: hidden; transition: width 0.9s ease; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+      .side-menu-desktop .menu-links { font-family: "Peyda", sans-serif; }
+      .side-menu-desktop.expanded { width: 250px; }
+      .navbar-desktop .logo-container { padding: 20px 0; display: flex; justify-content: center; }
+      .navbar-desktop .logo { width: 100px; height: auto; max-width: 80%; margin-top: 10px; }
+      .navbar-desktop .hamburger { cursor: pointer; margin-top: 160px; padding: 15px; position: relative; z-index: 101; }
+      .navbar-desktop .hamburger-line { width: 30px; height: 3px; background-color: #fff; margin: 6px 0; transition: 0.9s; }
+      .navbar-desktop.expanded .hamburger-line:first-child { transform: rotate(-45deg) translate(-5px, 6px); }
+      .navbar-desktop.expanded .hamburger-line:nth-child(2) { opacity: 0; }
+      .navbar-desktop.expanded .hamburger-line:last-child { transform: rotate(45deg) translate(-5px, -6px); }
+      .side-menu-desktop .menu-links { text-align: center; width: 100%; }
+      .side-menu-desktop .menu-links a { display: block; padding: 15px; text-decoration: none; color: #fff; font-size: 1.2rem; margin: 10px 0; transition: transform 0.3s ease; }
+      .side-menu-desktop .menu-links a:hover { transform: translateX(10px); }
+
+      /* --- Mobile Navbar & Menu (Hidden on Desktop) --- */
+      .mobile-navbar { display: none; /* Hidden by default */ position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: #000; z-index: 100; align-items: center; justify-content: space-between; padding: 0 15px; }
+      .mobile-navbar .logo { height: 40px; width: auto; }
+      .mobile-navbar .hamburger { cursor: pointer; padding: 10px; z-index: 101; }
+      .mobile-navbar .hamburger-line { width: 25px; height: 2.5px; background-color: #fff; margin: 5px 0; transition: 0.4s; }
+      .mobile-navbar.expanded .hamburger-line:first-child { transform: rotate(45deg) translate(5px, 5px); }
+      .mobile-navbar.expanded .hamburger-line:nth-child(2) { opacity: 0; }
+      .mobile-navbar.expanded .hamburger-line:last-child { transform: rotate(-45deg) translate(5px, -5px); }
+
+      .mobile-menu { display: none; /* Hidden by default */ position: fixed; top: 60px; /* Below mobile navbar */ left: 0; width: 100%; background-color: #171717; z-index: 99; overflow: hidden; max-height: 0; transition: max-height 0.5s ease-out; }
+      .mobile-menu.expanded { max-height: calc(100vh - 60px); /* Expand */ }
+      .mobile-menu .menu-links { padding: 20px 0; }
+      .mobile-menu .menu-links a { display: block; padding: 15px 30px; text-decoration: none; color: #fff; font-size: 1.3rem; text-align: right; } /* Align text right for RTL */
+      .mobile-menu .menu-links a:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+      /* --- Main Content Area --- */
+      .main-container { width: 100vw; height: 100vh; position: relative; background-color: #000; transition: transform 0.3s ease, filter 0.3s ease; }
+      /* Desktop-specific main-container adjustments */
+      .main-container:not(.mobile-active) { width: calc(100vw - 80px); margin-right: 80px; }
+      .main-container.shifted:not(.mobile-active) { transform: translateX(-250px); filter: brightness(0.5); }
+      /* Mobile-specific main-container adjustments */
+      .main-container.mobile-active { margin-top: 60px; height: calc(100vh - 60px); width: 100vw; margin-right: 0; } /* Add margin-top for mobile navbar */
+
+      .background-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.8s ease-in-out; opacity: 0; z-index: 1; }
+      .background-image.active { opacity: 1; z-index: 2; }
+      .sections-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: row; z-index: 5; transition: opacity 0.5s ease; opacity: 1; }
+      .sections-overlay.hidden-intro { opacity: 0; pointer-events: none; }
+
+      /* --- Desktop Section Styling --- */
+      .section { flex: 1; display: flex; justify-content: center; align-items: flex-end; text-align: center; position: relative; cursor: pointer; transition: background-color 0.3s ease; z-index: 10; padding-bottom: 40px; width: 100%; height: 100%; }
+      .section:not(:last-child)::after { content: ""; position: absolute; right: 0; top: 10%; height: 80%; width: 1px; background-color: rgba(255, 255, 255, 0.5); z-index: 11; transition: top 0.3s ease, height 0.3s ease; }
+      .section:nth-child(2)::after { height: 24%; top: 66%; } /* Specific adjustment for divider */
+      .section:hover { background-color: rgba(0, 0, 0, 0.3); }
+      .section a { font-family: "Peyda", sans-serif; font-size: 1.5rem; text-decoration: none; color: #ebebeb; text-shadow: 2px 2px 4px rgb(0, 0, 0); transition: transform 0.3s ease, margin-bottom 0.3s ease; display: block; padding: 20px; position: relative; z-index: 12; pointer-events: none; background-color: transparent; border-radius: 0; border: none; }
+      .section:hover a { transform: scale(1.05); margin-bottom: 20px; }
+
+      /* --- Overlay (Used by both menus) --- */
+      .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 98; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s; }
+      .overlay.active { opacity: 1; visibility: visible; transition: opacity 0.3s ease; }
+
+      /* --- Mobile Dots --- */
+      .mobile-dots { position: fixed; bottom: 25px; /* Adjusted position */ left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 15; padding: 5px; border-radius: 10px; display: none; transition: opacity 0.5s ease; opacity: 1; }
+      .mobile-dots.hidden-intro { opacity: 0; pointer-events: none; }
+      .dot { width: 11px; height: 11px; background-color: transparent; border: 1.5px solid rgba(255, 255, 255, 0.6); border-radius: 50%; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease; }
+      .dot.active { background-color: #fff; border-color: #fff; }
+
+      /* --- Responsive design - Mobile --- */
+      @media (max-width: 768px) {
+        /* Hide Desktop Nav, Show Mobile Nav */
+        .navbar-desktop, .side-menu-desktop { display: none; }
+        .mobile-navbar, .mobile-menu { display: flex; /* Or block for .mobile-menu if needed */ }
+        .mobile-menu { display: block; /* Ensure it takes full width */ }
+
+
+        /* Adjust Main Container for Mobile Nav */
+        .main-container {
+            width: 100vw !important; /* Override desktop width */
+            height: calc(100vh - 60px) !important; /* Account for mobile navbar */
+            margin-top: 60px !important; /* Push content down */
+            margin-right: 0 !important; /* Override desktop margin */
+            transform: none !important; /* Disable shift */
+            filter: none !important; /* Disable brightness */
+        }
+
+         /* Ensure overlay covers content below mobile navbar */
+         .overlay.active {
+             top: 60px;
+             height: calc(100% - 60px);
+          }
+
+        /* Mobile Section & Overlay Adjustments */
+        .sections-overlay { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
+        .section {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: flex-end; /* Align button to bottom */
+            align-items: center; padding-bottom: 110px; /* Increased padding to clear dots */
+            opacity: 0; transition: opacity 0.8s ease-in-out; z-index: 6;
+            cursor: default; background-color: transparent !important; /* Override hover */
+            flex: none; /* Override desktop flex */
+        }
+        .section.active-mobile { opacity: 1; z-index: 7; }
+        .section::after { display: none !important; } /* Hide desktop dividers */
+
+        /* Rule to Force Hide Sections During Intro */
+        .sections-overlay.hidden-intro .section {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        /* Mobile Section Link Button Styling */
+        .section a {
+            font-size: 1.2rem; /* Adjusted font size */
+            font-weight: 500; color: #fff; text-decoration: none;
+            text-shadow: none; background-color: rgba(0, 0, 0, 0.55);
+            padding: 10px 24px; /* Adjusted padding */
+            border-radius: 30px; margin-bottom: 15px; display: inline-block;
+            position: relative; z-index: 8; pointer-events: auto; /* Allow clicks */
+            transform: none !important; /* Disable desktop hover effect */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer; /* Make it clear it's clickable */
+        }
+        .section a:hover { /* Subtle mobile hover/active */
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px) !important; /* Simplified hover */
+            margin-bottom: 15px;
+        }
+         .section a:active {
+             transform: translateY(0px) !important;
+             background-color: rgba(255, 255, 255, 0.1);
+         }
+        .section:hover { background-color: transparent !important; } /* Ensure no bg on hover */
+        .section:hover a { /* Reset desktop hover styles */
+             transform: none !important;
+             margin-bottom: 15px !important;
+        }
+
+
+        /* Show mobile dots container */
+        .mobile-dots { display: flex; }
+
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" ref="appRef"> <!-- Add ref for touch events if needed -->
+
+      <!-- Desktop Navbar -->
+      <div class="navbar-desktop" :class="{ expanded: menuExpanded }" v-show="!isMobile">
+         <div class="logo-container"> <img class="logo" src="/mimg/logo.png" alt="logo" /> </div>
+         <div class="hamburger" @click="toggleMenu"> <div class="hamburger-line"></div> <div class="hamburger-line"></div> <div class="hamburger-line"></div> </div>
+      </div>
+      <!-- Desktop Side Menu -->
+      <div class="side-menu-desktop" :class="{ expanded: menuExpanded }" v-show="!isMobile">
+         <div class="menu-links"> <a href="/about/index.html" @click="closeMenu">درباره من</a> <a href="/projects/index.html" @click="closeMenu">پروژه‌ها</a> <a href="/skills/index.html" @click="closeMenu">مهارت‌ها</a> <a href="/contact/index.html" @click="closeMenu">ارتباط با من</a> </div>
+      </div>
+
+      <!-- Mobile Navbar -->
+      <div class="mobile-navbar" :class="{ expanded: menuExpanded }" v-show="isMobile">
+          <img class="logo" src="/mimg/logo.png" alt="logo" />
+          <div class="hamburger" @click="toggleMenu">
+              <div class="hamburger-line"></div>
+              <div class="hamburger-line"></div>
+              <div class="hamburger-line"></div>
+          </div>
+      </div>
+      <!-- Mobile Menu -->
+      <div class="mobile-menu" :class="{ expanded: menuExpanded }" v-show="isMobile">
+          <div class="menu-links">
+              <a href="/about/index.html" @click="closeMenu">درباره من</a>
+              <a href="/projects/index.html" @click="closeMenu">پروژه‌ها</a>
+              <a href="/skills/index.html" @click="closeMenu">مهارت‌ها</a>
+              <a href="/contact/index.html" @click="closeMenu">ارتباط با من</a>
+          </div>
+      </div>
+
+      <!-- Overlay for Menus -->
+      <div class="overlay" :class="{ active: menuExpanded }" @click="closeMenu"></div>
+
+      <!-- Main content container -->
+      <!-- Added touch event listeners -->
+      <div class="main-container"
+           ref="mainContainerRef"
+           :class="{ shifted: menuExpanded && !isMobile, 'mobile-active': isMobile }"
+           @click="handleMainClick"
+           @touchstart="handleTouchStart"
+           @touchmove="handleTouchMove"
+           @touchend="handleTouchEnd">
+
+         <!-- Background images -->
+         <img v-for="(image, index) in images" :key="'img-' + index" :src="image.url" :alt="image.alt" class="background-image" :class="{ active: currentImage === index }" />
+
+         <!-- Sections Overlay (Conditionally hidden via class) -->
+         <div class="sections-overlay" :class="{'hidden-intro': isMobile && showMobileIntro}">
+             <div v-for="(section, index) in sections"
+                  :key="'section-' + index"
+                  class="section"
+                  :class="{ 'active-mobile': isMobile && !showMobileIntro && activeMobileSectionIndex === index }"
+                  @mouseenter="handleMouseEnter(index)"
+                  @mouseleave="handleMouseLeave"
+                  @click="handleSectionClick(section.link, index)"> <!-- Desktop click -->
+                 <!-- Use button for mobile click/tap -->
+                 <a :href="isMobile ? null : section.link" @click.prevent="isMobile ? navigateMobileSection(section.link) : null">
+                      {{ section.title }}
+                 </a>
+             </div>
+         </div>
+      </div>
+
+      <!-- Mobile Navigation Dots -->
+      <div class="mobile-dots" :class="{'hidden-intro': isMobile && showMobileIntro}" v-show="isMobile">
+         <span v-for="(section, index) in sections" :key="'dot-' + index" class="dot" :class="{ active: !showMobileIntro && activeMobileSectionIndex === index }" @click="goToMobileSection(index)"></span>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, ref, onMounted, onUnmounted, nextTick } = Vue;
+
+      createApp({
+        setup() {
+          const defaultImageIndex = 0;
+          const introImageIndex = 5; // Index of the intro image
+          const currentImage = ref(defaultImageIndex);
+          const menuExpanded = ref(false);
+          const isMobile = ref(window.innerWidth <= 768);
+          const activeMobileSectionIndex = ref(0);
+          const showMobileIntro = ref(false); // Controls the visibility of the intro state
+          let mobileInterval = null;
+          let introTimeout = null;
+          const mobileSlideDuration = 5000; // Auto-slide interval
+          const introDuration = 3000; // How long the intro image shows
+
+           // Refs for touch handling
+          const mainContainerRef = ref(null); // Ref for the main container element
+          const touchStartX = ref(0);
+          const touchCurrentX = ref(0);
+          const isSwiping = ref(false); // Flag to track swipe state
+          const minSwipeDistance = 50; // Minimum pixels to be considered a swipe
+
+
+          const images = [
+            { url: "/mimg/main.png", alt: "Main image - overview" }, // Index 0 (Desktop Default)
+            { url: "/mimg/skills.webp", alt: "skills image" },        // Index 1 (Section 0)
+            { url: "/mimg/projects.webp", alt: "Projects image" },    // Index 2 (Section 1)
+            { url: "/mimg/growth.webp" },                             // Index 3 (Section 2)
+            { url: "/mimg/contact.webp", alt: "Contact image" },      // Index 4 (Section 3)
+            { url: "/mimg/minhero2.png", alt: "Intro image" },        // Index 5 (Mobile Intro)
+          ];
+
+          const sections = [
+            { title: "چه کمکی از دست من برمیاد؟", link: "/skills/index.html" },
+            { title: " پروژه و همکاری‌های اخیر", link: "/projects/index.html" },
+            { title: "خط زمانی-داستانی من", link: "/about/index.html" }, // Corrected link?
+            { title: "چطور من رو میشه پیدا کرد؟", link: "/contact/index.html" },
+          ];
+
+          // --- Mobile Intro Logic ---
+          const endMobileIntro = () => {
+              if (!showMobileIntro.value) return; // Only end if currently in intro
+              clearTimeout(introTimeout);
+              introTimeout = null;
+              showMobileIntro.value = false; // Hide intro overlay/state
+              activeMobileSectionIndex.value = 0; // Go to the first section
+              currentImage.value = activeMobileSectionIndex.value + 1; // Show first section's image (index 1)
+              startMobileSlider(); // Start auto-sliding
+          }
+
+          // --- Mobile Slider Logic ---
+          const stopMobileSlider = () => {
+            if (mobileInterval) {
+              clearInterval(mobileInterval);
+              mobileInterval = null;
+            }
+          };
+
+          const startMobileSlider = () => {
+            stopMobileSlider(); // Ensure no duplicates
+            // Start only if on mobile, not in intro, and menu is closed
+            if (isMobile.value && !showMobileIntro.value && !menuExpanded.value) {
+              // Ensure correct image is shown initially
+              currentImage.value = activeMobileSectionIndex.value + 1;
+              mobileInterval = setInterval(() => {
+                // Cycle through sections
+                activeMobileSectionIndex.value = (activeMobileSectionIndex.value + 1) % sections.length;
+                currentImage.value = activeMobileSectionIndex.value + 1; // Update background image
+              }, mobileSlideDuration);
+            }
+          };
+
+          // --- Navigation Logic ---
+          const goToMobileSection = (index) => {
+               if (!isMobile.value) return; // Only for mobile
+
+               // If in intro mode, end it first
+               if (showMobileIntro.value) {
+                   endMobileIntro();
+                   // If the target wasn't the first section, manually set it after ending intro
+                   if (index !== 0) {
+                       stopMobileSlider(); // Stop slider started by endMobileIntro
+                       activeMobileSectionIndex.value = index;
+                       currentImage.value = index + 1;
+                       startMobileSlider(); // Restart slider from the new position
+                   }
+               } else {
+                   // Normal navigation
+                   stopMobileSlider();
+                   activeMobileSectionIndex.value = index;
+                   currentImage.value = index + 1;
+                   startMobileSlider(); // Restart slider timer
+               }
+           };
+
+           // Navigate when clicking the section button on mobile
+           const navigateMobileSection = (url) => {
+               if (isMobile.value) {
+                   window.location.href = url;
+               }
+           }
+
+          // --- Desktop Hover Logic ---
+          const handleMouseEnter = (index) => {
+              if (!isMobile.value && !menuExpanded.value) { // Don't change image if menu is open
+                  currentImage.value = index + 1; // Image index is section index + 1
+              }
+          };
+          const handleMouseLeave = () => {
+              if (!isMobile.value && !menuExpanded.value) {
+                  currentImage.value = defaultImageIndex; // Back to default image
+              }
+          };
+
+          // --- Desktop Section Click ---
+          const handleSectionClick = (url, index) => {
+              // Only navigate on desktop click (mobile uses the button inside)
+              if (!isMobile.value && !menuExpanded.value) {
+                  window.location.href = url;
+              }
+              // On mobile, this click might happen on the section area, do nothing specific here
+              // as the button/link handles the navigation.
+          };
+
+          // --- Menu Toggle Logic ---
+          const toggleMenu = () => {
+              menuExpanded.value = !menuExpanded.value;
+              if (isMobile.value) {
+                // Pause/Resume slider when mobile menu opens/closes
+                if (menuExpanded.value) {
+                    stopMobileSlider();
+                } else {
+                    // Resume slider only if not in intro mode
+                    if(!showMobileIntro.value) {
+                       startMobileSlider();
+                    }
+                }
+              }
+          };
+          const closeMenu = () => {
+              if (menuExpanded.value) { // Only act if menu is currently open
+                 menuExpanded.value = false;
+                 if (isMobile.value && !showMobileIntro.value) {
+                     // Resume slider when menu is closed via link click or overlay click
+                     startMobileSlider();
+                 }
+              }
+          };
+
+          // Close desktop side menu if clicking outside
+          const handleMainClick = (event) => {
+            if (!isMobile.value && menuExpanded.value && !event.target.closest('.navbar-desktop') && !event.target.closest('.side-menu-desktop')) {
+               closeMenu();
+            }
+            // No action needed for mobile main click regarding menu closure (handled by overlay)
+          };
+
+          // --- Touch/Swipe Logic ---
+          const handleTouchStart = (event) => {
+              // Ignore if menu is open, not on mobile, or more than one touch point
+              if (menuExpanded.value || !isMobile.value || event.touches.length > 1) return;
+
+              touchStartX.value = event.touches[0].clientX;
+              touchCurrentX.value = touchStartX.value; // Initialize current X
+              isSwiping.value = true; // Start tracking swipe
+              stopMobileSlider(); // Pause slider during touch interaction
+              // Prevent default scroll/zoom behavior *only if* swiping horizontally later
+          };
+
+          const handleTouchMove = (event) => {
+              if (!isSwiping.value || !isMobile.value || event.touches.length > 1) return;
+
+              touchCurrentX.value = event.touches[0].clientX;
+              // Optional: Add visual feedback here if desired (e.g., slight element shift)
+
+              // Prevent vertical scroll if horizontal swipe seems intended
+              const deltaX = touchCurrentX.value - touchStartX.value;
+              if (Math.abs(deltaX) > 10) { // Threshold to detect horizontal movement intention
+                   event.preventDefault(); // Prevent vertical scroll when swiping horizontally
+              }
+          };
+
+          const handleTouchEnd = (event) => {
+              if (!isSwiping.value || !isMobile.value) return; // Ensure we were swiping and are on mobile
+
+              const deltaX = touchCurrentX.value - touchStartX.value;
+              let newIndex = activeMobileSectionIndex.value;
+
+              // Check if it was a valid swipe
+              if (Math.abs(deltaX) > minSwipeDistance) {
+                  // If in intro, end intro first
+                  if (showMobileIntro.value) {
+                      endMobileIntro();
+                      // After ending intro, the index is already 0.
+                      // If the swipe was opposite to the default direction (e.g., swipe right),
+                      // adjust accordingly. Or simply let the next swipe handle it.
+                      // For simplicity, ending intro always goes to section 0 first.
+                  } else {
+                      if (deltaX < 0) { // Swipe Left (Next)
+                          newIndex = (activeMobileSectionIndex.value + 1) % sections.length;
+                      } else { // Swipe Right (Previous)
+                          newIndex = (activeMobileSectionIndex.value - 1 + sections.length) % sections.length;
+                      }
+                      goToMobileSection(newIndex); // Navigate using the central function
+                  }
+              } else {
+                  // If not a swipe, restart slider only if not in intro
+                  if(!showMobileIntro.value) {
+                     startMobileSlider();
+                  }
+              }
+
+              // Reset touch state
+              isSwiping.value = false;
+              touchStartX.value = 0;
+              touchCurrentX.value = 0;
+          };
+
+
+          // --- Screen Resize Logic ---
+          const checkScreenSize = () => {
+             const currentlyMobile = window.innerWidth <= 768;
+             if (currentlyMobile !== isMobile.value) {
+                 // Screen size changed (desktop <-> mobile)
+                 isMobile.value = currentlyMobile;
+                 menuExpanded.value = false; // Close menu on resize
+                 clearTimeout(introTimeout); introTimeout = null;
+                 stopMobileSlider();
+
+                 if (isMobile.value) {
+                     // Transitioning TO Mobile
+                     showMobileIntro.value = true; // Show intro state
+                     currentImage.value = introImageIndex; // Set intro image
+                     activeMobileSectionIndex.value = 0; // Reset mobile index
+                     // Set timeout to end the intro
+                     introTimeout = setTimeout(endMobileIntro, introDuration);
+                 } else {
+                     // Transitioning TO Desktop
+                     showMobileIntro.value = false; // Ensure intro state is off
+                     currentImage.value = defaultImageIndex; // Reset to desktop default image
+                     activeMobileSectionIndex.value = 0; // Reset mobile index (though not used)
+                 }
+             }
+           };
+
+          // --- Lifecycle Hooks ---
+          onMounted(() => {
+            window.addEventListener('resize', checkScreenSize);
+            checkScreenSize(); // Initial check
+
+            // Attach touch listeners to the main container
+            // Using nextTick to ensure the element is available if ref is complex
+             nextTick(() => {
+                 const mainEl = mainContainerRef.value;
+                 if (mainEl) {
+                    // Passive: false needed if we call preventDefault() in touchmove
+                    // mainEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+                    // mainEl.addEventListener('touchmove', handleTouchMove, { passive: true }); // Change if preventDefault needed
+                    // mainEl.addEventListener('touchend', handleTouchEnd);
+                    // Event listeners are now directly attached in the template (@touchstart etc)
+                 }
+             });
+          });
+
+          onUnmounted(() => {
+            window.removeEventListener('resize', checkScreenSize);
+            clearTimeout(introTimeout);
+            stopMobileSlider();
+             // Remove listeners if they were added manually (not needed if using @ in template)
+            // const mainEl = mainContainerRef.value;
+            // if (mainEl) {
+            //    mainEl.removeEventListener('touchstart', handleTouchStart);
+            //    mainEl.removeEventListener('touchmove', handleTouchMove);
+            //    mainEl.removeEventListener('touchend', handleTouchEnd);
+            // }
+          });
+
+          return {
+            // Refs & State
+            currentImage, menuExpanded, isMobile, activeMobileSectionIndex, showMobileIntro, mainContainerRef,
+            // Data
+            images, sections,
+            // Methods
+            handleMouseEnter, handleMouseLeave, handleSectionClick, toggleMenu, closeMenu, handleMainClick,
+            goToMobileSection, navigateMobileSection,
+            // Touch handlers (exposed for template binding)
+            handleTouchStart, handleTouchMove, handleTouchEnd,
+          };
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
